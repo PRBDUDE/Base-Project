@@ -5,10 +5,10 @@
     "main": "index.js",
     "scripts": {
         "copy:css": "copyfiles -u 1 ./src/css/**.css dist",
-        "copy:assets": "copyfiles -u 1 ./src/assets/**.* dist",
+        "copy:public": "copyfiles -u 1 ./src/public/**.* ./src/public/images/**.* dist",
         "copy:html": "copyfiles -u 1 ./src/*.html dist",
         "copy": "npm-run-all --parallel copy:*",
-        "watch:assets": "onchange \"./src/assets/**.*\" -- npm run copy:assets",
+        "watch:public": "onchange \"./src/public/**.*\" -- npm run copy:public",
         "watch:html": "onchange \"./src/*.html\" -- npm run copy:html",
         "watch:css": "onchange \"./src/css/*.css\" -- npm run copy:css",
         "watch:scss": "sass --no-source-map --watch src/css",
@@ -21,15 +21,15 @@
     "author": "D. Dean Neighbour",
     "license": "ISC",
     "dependencies": {
-        "autoprefixer": "^10.4.20",
-        "browser-sync": "^3.0.3",
+        "autoprefixer": "^10.4.21",
+        "browser-sync": "^3.0.4",
         "copyfiles": "^2.4.1",
         "cross-env": "^7.0.3",
-        "cssnano": "^7.0.6",
+        "cssnano": "^7.0.7",
         "npm-run-all": "^4.1.5",
         "onchange": "^7.1.0",
-        "postcss": "^8.5.1",
-        "postcss-cli": "^11.0.0",
-        "sass": "^1.83.4"
+        "postcss": "^8.5.3",
+        "postcss-cli": "^11.0.1",
+        "sass": "^1.87.0"
     }
 }
