@@ -129,4 +129,4 @@ dist
 .yarn/install-state.gz
 .pnp.*
 .idea/
-/src/css/site.css
+/src/css/*.css
