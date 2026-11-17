@@ -1,13 +1,6 @@
-*,
-*::before,
-*::after {
-    box-sizing: border-box;
-}
-
-:root {
-    /* Add your custom variables here */
-}
-
-body {
-    /* Add your custom styles here */
-}
+@use "color";
+@use "color-palette-generator";
+@use "page";
+@use "navigation";
+@use "buttons";
+@use "input";

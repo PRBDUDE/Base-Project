@@ -1,0 +1,35 @@
+select,
+input {
+    background-color: var(--surface-450);
+    color: var(--surface-950);
+    border: 1px solid var(--surface-700);
+    border-radius: 5px;
+    padding: 5px;
+
+    &::placeholder {
+        color: var(--surface-700);
+    }
+
+    &:hover,
+    &:focus {
+        outline: 1px solid var(--teal-50);
+    }
+}
+
+input {
+    &[type="checkbox"],
+    &[type="radio"] {
+        width: 1.2em;
+        height: 1.2em;
+
+        &:hover,
+        &:focus {
+            outline: none;
+        }
+    }
+}
+
+option {
+    background-color: var(--surface-300);
+    color: var(--surface-900);
+}
