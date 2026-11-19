@@ -96,8 +96,10 @@ $shade-lightness-map: (
     $hue: map.get($config, "hue");
     // If saturation does not exist, then use default value of 70%
     $saturation: if(sass(map.has-key($config, "saturation")): map.get($config, "saturation"); else: 70%);
+    //@debug "$saturation: #{$saturation}";
     // If lightness does not exist, then use default value of 50%
     $base-lightness: if(sass(map.has-key($config, "lightness")): map.get($config, "lightness"); else: 50%);
+    //@debug "$base-lightness: #{$base-lightness}";
 
     $shades-map: ();
 
