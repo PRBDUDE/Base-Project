@@ -107,6 +107,7 @@ $shade-lightness-map: (
       // Scale lightness relative to custom base lightness if provided
       $adjusted-lightness: if(sass($base-lightness != 50%): $target-lightness * math.div($base-lightness, 50%); else: $target-lightness);
 
+      //@debug "$hue #{$hue}  $saturation #{$saturation}  $adjusted-lightness #{$adjusted-lightness}";
       $color: hsl($hue, $saturation, $adjusted-lightness);
 
       // Add shade map to $shades-map
