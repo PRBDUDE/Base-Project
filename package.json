@@ -16,7 +16,7 @@
     "serve": "browser-sync start --config bs-config.js",
     "start": "npm-run-all copy --parallel watch serve",
     "build": "npm-run-all copy:html build:*",
-    "build:css": "sass src/css --no-source-map",
+    "build:css": "sass src/css --no-source-map --verbose",
     "postbuild": "postcss dist/css/*.css -u autoprefixer cssnano -r --no-map"
   },
   "author": "D. Dean Neighbour",

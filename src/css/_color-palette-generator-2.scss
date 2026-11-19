@@ -1,0 +1,126 @@
+@use "sass:color";
+@use "sass:map";
+@use "sass:math";
+@use "sass:list";
+@use "sass:meta";
+
+// using scss only -
+// hue value as input -
+// generate shades of a given color code -
+// output scss -
+// output 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950 -
+// permit n number of hues to be input -
+// add color name -
+// optional override for saturation or lightness for a given hue
+
+// -----------------------------------------------------------------------------
+// 1. Shade Scale Configuration (Perceptual OKLCH Lightness & Chroma Multipliers)
+// -----------------------------------------------------------------------------
+$shade-scale: (
+        50: (l: 97.5%, c-factor: 0.12),
+        100: (l: 94.0%, c-factor: 0.25),
+        200: (l: 87.5%, c-factor: 0.45),
+        300: (l: 78.5%, c-factor: 0.70),
+        400: (l: 68.0%, c-factor: 0.90),
+        500: (l: 58.0%, c-factor: 1.00), // Base anchor
+        600: (l: 49.0%, c-factor: 0.95),
+        700: (l: 40.5%, c-factor: 0.85),
+        800: (l: 33.0%, c-factor: 0.70),
+        900: (l: 26.5%, c-factor: 0.55),
+        950: (l: 19.0%, c-factor: 0.40),
+);
+
+// -----------------------------------------------------------------------------
+// 2. Shade Generator Function
+// -----------------------------------------------------------------------------
+@function generate-palette($colors) {
+  $palette: ();
+
+  @each $name, $config in $colors {
+    $hue: null;
+    $saturation: 85%; // Default saturation/chroma intensity
+    $lightness-offset: 0%;
+
+    // Permit either a raw hue number OR a configuration map
+    @if meta.type-of($config) == "number" {
+      $hue: $config;
+    } @else if meta.type-of($config) == "map" {
+      $hue: map.get($config, "hue");
+      $saturation: map.get($config, "saturation") or $saturation;
+      $lightness-offset: map.get($config, "lightness") or $lightness-offset;
+    }
+
+    // Normalize hue to degrees if unitless
+    @if meta.type-of($hue) == "number" and math.is-unitless($hue) {
+      $hue: $hue * 1deg;
+    }
+
+    // Convert saturation % (0-100%) to OKLCH max chroma (~0.28 max safe gamut)
+    $base-chroma: math.div($saturation, 100%) * 0.28;
+    $shades: ();
+
+    @each $step, $params in $shade-scale {
+      $target-l: map.get($params, "l") + $lightness-offset;
+      // Clamp lightness between 5% and 99%
+      $clamped-l: math.max(5%, math.min(99%, $target-l));
+      $target-c: $base-chroma * map.get($params, "c-factor");
+
+      // Construct color in OKLCH space and convert to sRGB hex/rgb for browser compatibility
+      $oklch-color: oklch($clamped-l $target-c $hue);
+      $srgb-color: color.to-gamut($oklch-color, $space: srgb, $method: local-minde);
+
+      $shades: map.set($shades, $step, color.to-space($srgb-color, srgb));
+    }
+
+    $palette: map.set($palette, $name, $shades);
+  }
+
+  @return $palette;
+}
+
+// -----------------------------------------------------------------------------
+// 3. Input Configuration (N-number of hues + optional overrides)
+// -----------------------------------------------------------------------------
+$brand-hues: (
+        "primary": 180,
+        "secondary": 210,
+        "caution": 100,
+  // Simple hue input (uses default saturation & lightness curve)
+        "ocean": 220,
+  // Hue with unit
+        "emerald": 155deg,
+  // Map input with optional saturation & lightness overrides
+        "amber": (
+                "hue": 45,
+                "saturation": 95%,
+                "lightness": 4%, // Shifts entire scale slightly brighter
+        ),
+        "slate": (
+                "hue": 215,
+                "saturation": 18%, // Low saturation for neutral grays
+        ),
+        "crimson": (
+                "hue": 15,
+                "saturation": 90%,
+                "lightness": -2%, // Shifts entire scale slightly darker
+        )
+);
+
+// Generate the full nested SCSS map
+$generated-colors: generate-palette($brand-hues);
+
+// -----------------------------------------------------------------------------
+// 4. Output: CSS Custom Properties & Utility Helper
+// -----------------------------------------------------------------------------
+:root {
+  @each $color-name, $shades in $generated-colors {
+    @each $step, $value in $shades {
+      --prb-2-color-#{$color-name}-#{$step}: #{$value};
+    }
+  }
+}
+
+// Optional helper function to retrieve values directly in SCSS
+@function color-token($name, $shade: 500) {
+  @return map.get($generated-colors, $name, $shade);
+}

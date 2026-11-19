@@ -1,0 +1,108 @@
+@use "sass:color";
+@use "sass:list";
+@use "sass:map";
+@use "sass:math";
+@use "sass:meta";
+@use "sass:string";
+
+// 1. Define n colors:
+//    - Pass a bare hue (0–360) for standard saturation & lightness
+//    - Or pass a map with `hue` plus optional `saturation` (-100% to +100%) and `lightness` (-100% to +100%)
+$brand-hues: (
+        "primary": ("hue": 180),
+        "secondary": ("hue": 210),
+        "ocean": 220,
+        "neutral": ("hue": 0, "saturation": 10%, "lightness": 45%),
+        "silver": ("hue": 0, "saturation": 10%, "lightness": 76.86%),
+        "gray": ("hue": 0, "saturation": 10%, "lightness": 50%),
+        "brown": ("hue": 22, "saturation": 47%, "lightness": 45%),
+        "stone": ("hue": 25, "saturation": 5%, "lightness": 45%),
+        "slate": ("hue": 220, "saturation": -80%),
+        "amber": ("hue": 82, "saturation": 25%, "lightness": 10%,),
+        "red": ("hue": 0, "saturation": 100%, "lightness": 8.8%),
+        "orange": ("hue": 2.58, "saturadtion": 60.78%, "lightness": 30%),
+        "crimson": ("hue": 22, "saturation": 15%, "lightness": -8%),
+);
+
+// 2. Base perceptual lightness & chroma curves (50–950)
+$scale-config: (
+        50: (l: 97.5%, c: 0.015),
+        100: (l: 94.0%, c: 0.032),
+        200: (l: 87.5%, c: 0.065),
+        300: (l: 78.0%, c: 0.105),
+        400: (l: 66.5%, c: 0.145),
+        500: (l: 55.0%, c: 0.165),
+        600: (l: 46.0%, c: 0.150),
+        700: (l: 38.0%, c: 0.125),
+        800: (l: 30.5%, c: 0.095),
+        900: (l: 24.0%, c: 0.070),
+        950: (l: 16.5%, c: 0.045),
+);
+
+// 3. Strict 6-digit lowercase #ffffff serializer (Sass 3.0.0 safe)
+@function to-hex($color) {
+  $rgb: color.to-gamut($color, $space: rgb, $method: local-minde);
+  $rgb: color.to-space($rgb, rgb);
+  $hex-chars: "0" "1" "2" "3" "4" "5" "6" "7" "8" "9" "a" "b" "c" "d" "e" "f";
+  $result: "#";
+
+  @each $channel in ("red", "green", "blue") {
+    $val: math.round(color.channel($rgb, $channel, $space: rgb));
+    $val: math.clamp(0, $val, 255);
+    $high: math.floor(math.div($val, 16)) + 1;
+    $low: ($val % 16) + 1;
+    $result: $result + list.nth($hex-chars, $high) + list.nth($hex-chars, $low);
+  }
+
+  @return string.unquote($result);
+}
+
+// 4. Generate a single shade using `hue`, `saturation`, and `lightness`
+@function generate-shade($input, $step) {
+  $step-cfg: map.get($scale-config, $step);
+  $base-l: map.get($step-cfg, "l");
+  $base-c: map.get($step-cfg, "c");
+
+  $hue: $input;
+  $saturation: 0%;
+  $lightness: 0%;
+
+  @if meta.type-of($input) == "map" {
+    $hue: map.get($input, "hue");
+
+    @if map.has-key($input, "saturation") {
+      $saturation: map.get($input, "saturation");
+    }
+
+    @if map.has-key($input, "lightness") {
+      $lightness: map.get($input, "lightness");
+    }
+  }
+
+  $final-h: $hue;
+  @if math.is-unitless($hue) {
+    $final-h: $hue * 1deg;
+  }
+
+  // Convert saturation % (-100% -> 0x chroma, 0% -> 1x chroma, +50% -> 1.5x chroma)
+  $sat-factor: math.max(0, 1 + math.div($saturation, 100%));
+  $final-c: $base-c * $sat-factor;
+
+  // Taper lightness adjustment near 0% and 100% so 50 stays pale and 950 stays deep
+  $ratio: math.div($base-l, 100%);
+  $edge-taper: 4 * $ratio * (1 - $ratio);
+  $final-l: math.clamp(2%, $base-l + ($lightness * $edge-taper), 99%);
+
+  $raw-color: oklch($final-l $final-c $final-h);
+
+  @return to-hex($raw-color);
+}
+
+// 5. Output CSS Custom Properties
+:root {
+  @each $name, $config in $brand-hues {
+    @each $step, $values in $scale-config {
+      --prb-5-color-#{$name}-#{$step}: #{generate-shade($config, $step)};
+    }
+  }
+}

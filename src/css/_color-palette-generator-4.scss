@@ -1,0 +1,136 @@
+@use "sass:color";
+@use "sass:list";
+@use "sass:map";
+@use "sass:math";
+@use "sass:meta";
+@use "sass:string";
+
+// -----------------------------------------------------------------------------
+// 1. Shade Scale Configuration (Perceptual OKLCH Lightness & Chroma Multipliers)
+// -----------------------------------------------------------------------------
+$shade-scale: (
+        50:  (l: 97.5%, c-factor: 0.12),
+        100: (l: 94.0%, c-factor: 0.25),
+        200: (l: 87.5%, c-factor: 0.45),
+        300: (l: 78.5%, c-factor: 0.70),
+        400: (l: 68.0%, c-factor: 0.90),
+        500: (l: 58.0%, c-factor: 1.00),
+        600: (l: 49.0%, c-factor: 0.95),
+        700: (l: 40.5%, c-factor: 0.85),
+        800: (l: 33.0%, c-factor: 0.70),
+        900: (l: 26.5%, c-factor: 0.55),
+        950: (l: 19.0%, c-factor: 0.40),
+);
+
+// -----------------------------------------------------------------------------
+// 2. Helper: Force Any Color Space Value to Standard Hex (#rrggbb)
+// -----------------------------------------------------------------------------
+@function to-hex($color) {
+  $gamut-mapped: color.to-gamut($color, $space: srgb, $method: local-minde);
+  $srgb: color.to-space($gamut-mapped, srgb);
+
+  $r: math.round(color.channel($srgb, "red", $space: srgb) * 255);
+  $g: math.round(color.channel($srgb, "green", $space: srgb) * 255);
+  $b: math.round(color.channel($srgb, "blue", $space: srgb) * 255);
+
+  // Legacy rgb() constructor guarantees #rrggbb hex serialization in Sass 3.0.0
+  @return rgb($r, $g, $b);
+}
+
+// -----------------------------------------------------------------------------
+// 3. Shade Generator Function
+// -----------------------------------------------------------------------------
+@function generate-palette($colors) {
+  $palette: ();
+
+  @each $name, $config in $colors {
+    $hue: null;
+    $saturation: 85%;
+    $lightness-offset: 0%;
+
+    @if meta.type-of($config) == "number" {
+      $hue: $config;
+    } @else if meta.type-of($config) == "map" {
+      $hue: map.get($config, "hue");
+      $saturation: map.get($config, "saturation") or $saturation;
+      $lightness-offset: map.get($config, "lightness") or $lightness-offset;
+    }
+
+    @if meta.type-of($hue) == "number" and math.is-unitless($hue) {
+      $hue: $hue * 1deg;
+    }
+
+    $base-chroma: math.div($saturation, 100%) * 0.28;
+    $shades: ();
+
+    @each $step, $params in $shade-scale {
+      $target-l: map.get($params, "l") + $lightness-offset;
+      $clamped-l: math.max(5%, math.min(99%, $target-l));
+      $target-c: $base-chroma * map.get($params, "c-factor");
+
+      $oklch-color: oklch($clamped-l $target-c $hue);
+      $shades: map.set($shades, $step, to-hex($oklch-color));
+    }
+
+    $palette: map.set($palette, $name, $shades);
+  }
+
+  @return $palette;
+}
+
+// -----------------------------------------------------------------------------
+// 4. Input Configuration (N-number of hues + optional overrides)
+// -----------------------------------------------------------------------------
+$brand-hues: (
+        "ocean": 220,
+        "emerald": 155deg,
+        "amber": (
+                "hue": 45,
+                "saturation": 95%,
+                "lightness": 4%,
+        ),
+        "slate": (
+                "hue": 215,
+                "saturation": 18%,
+        ),
+);
+
+$generated-colors: generate-palette($brand-hues);
+
+// -----------------------------------------------------------------------------
+// 5. Output: CSS Custom Properties & SCSS Token Helper
+// -----------------------------------------------------------------------------
+:root {
+  @each $color-name, $shades in $generated-colors {
+    @each $step, $hex in $shades {
+      --prb-4-color-#{$color-name}-#{$step}: #{$hex};
+    }
+  }
+}
+
+@function color-token($name, $shade: 500) {
+  @return map.get($generated-colors, $name, $shade);
+}
+
+// -----------------------------------------------------------------------------
+// 2. Helper: Force Any Color Space Value to Guaranteed Hex (#rrggbb)
+// -----------------------------------------------------------------------------
+@function _channel-to-hex($value) {
+  $hex-chars: "0" "1" "2" "3" "4" "5" "6" "7" "8" "9" "a" "b" "c" "d" "e" "f";
+  $clamped: math.max(0, math.min(255, math.round($value)));
+  $high: math.floor(math.div($clamped, 16)) + 1;
+  $low: ($clamped % 16) + 1;
+  @return "#{list.nth($hex-chars, $high)}#{list.nth($hex-chars, $low)}";
+}
+
+@function to-hex($color) {
+  $gamut-mapped: color.to-gamut($color, $space: srgb, $method: local-minde);
+  $srgb: color.to-space($gamut-mapped, srgb);
+
+  // In Dart Sass Color 4, srgb channels are already on a 0–255 scale
+  $r: color.channel($srgb, "red", $space: srgb);
+  $g: color.channel($srgb, "green", $space: srgb);
+  $b: color.channel($srgb, "blue", $space: srgb);
+
+  @return string.unquote("##{_channel-to-hex($r)}#{_channel-to-hex($g)}#{_channel-to-hex($b)}");
+}

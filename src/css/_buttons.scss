@@ -1,39 +1,44 @@
 .btn- {
-    &primary {
-        background-color: var(--color-primary-background);
-        color: var(--color-primary-text);
+  &primary {
+    background-color: var(--color-primary-background);
+    color: var(--color-primary-text);
 
-        &:hover {
-            background-color: var(--color-primary-background-hover);
-        }
+    &:hover {
+      background-color: var(--color-primary-background-hover);
+    }
+  }
+
+  &secondary {
+    background-color: var(--color-secondary-background);
+    color: var(--color-secondary-text);
+
+    &:hover {
+      background-color: var(--color-secondary-background-hover);
+    }
+  }
+
+  &tertiary {
+    background-color: var(--color-tertiary-background);
+    color: var(--color-tertiary-text);
+    border: none;
+
+    &:hover {
+      background-color: var(--color-tertiary-background-hover);
     }
 
-    &secondary {
-        background-color: var(--color-secondary-background);
-        color: var(--color-secondary-text);
-
-        &:hover {
-            background-color: var(--color-secondary-background-hover);
-        }
+    &:active {
+      background-color: transparent;
     }
+  }
 
-    &tertiary {
-        background-color: var(--color-tertiary-background);
-        color: var(--color-tertiary-text);
-        border: none;
+  &primary, &secondary, &tertiary {
+    border-radius: 18px;
+    padding: 5px 10px;
+    text-shadow: 1px 1px 1px var(--surface-450);
 
-        &:hover {
-            background-color: var(--color-tertiary-background-hover);
-        }
+    &:active {
+      text-shadow: none;
+      transform: translateY(2px) translateX(1px);
     }
-
-    &primary, &secondary, &tertiary {
-        border-radius: 5px;
-        padding: 5px 10px;
-        text-shadow: 1px 1px 1px var(--surface-450);
-
-        &:active {
-            text-shadow: none;
-        }
-    }
+  }
 }

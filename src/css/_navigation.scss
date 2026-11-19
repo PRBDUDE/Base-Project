@@ -1,7 +1,7 @@
 nav {
-    background-color: var(--surface-950);
+    background-color: var(--prb-color-surface-900);
     padding: 5px 15px;
-    border-bottom: 2px solid var(--surface-700);
+    border-bottom: 2px solid var(--prb-color-gray-100);
     margin-bottom: 0.5em;
 
     ul {
@@ -11,7 +11,7 @@ nav {
 
         li {
             display: inline-block;
-            border-right: 2px solid var(--surface-600);
+            border-right: 2px solid var(--prb-color-surface-600);
             padding-right: 5px;
 
             &:last-child {
@@ -19,18 +19,18 @@ nav {
             }
 
             a {
-                color: var(--surface-0);
+                color: var(--prb-color-surface-50);
                 display: block;
                 padding: 5px 10px 5px 5px ;
                 text-decoration: none;
                 border-radius: 6px;
 
                 &:hover {
-                    background-color: var(--surface-700);
+                    background-color: var(--prb-color-surface-700);
                 }
 
                 &:active {
-                    background-color: var(--surface-800);
+                    background-color: var(--prb-color-surface-800);
                 }
             }
         }

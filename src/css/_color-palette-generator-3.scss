@@ -1,0 +1,128 @@
+@use "sass:color";
+@use "sass:map";
+@use "sass:math";
+@use "sass:meta";
+@use "sass:string";
+
+// -----------------------------------------------------------------------------
+// 1. Shade Scale Configuration (Perceptual OKLCH Lightness & Chroma Multipliers)
+// -----------------------------------------------------------------------------
+$shade-scale: (
+        50:  (l: 97.5%, c-factor: 0.12),
+        100: (l: 94.0%, c-factor: 0.25),
+        200: (l: 87.5%, c-factor: 0.45),
+        300: (l: 78.5%, c-factor: 0.70),
+        400: (l: 68.0%, c-factor: 0.90),
+        500: (l: 58.0%, c-factor: 1.00),
+        600: (l: 49.0%, c-factor: 0.95),
+        700: (l: 40.5%, c-factor: 0.85),
+        800: (l: 33.0%, c-factor: 0.70),
+        900: (l: 26.5%, c-factor: 0.55),
+        950: (l: 19.0%, c-factor: 0.40),
+);
+
+// -----------------------------------------------------------------------------
+// 2. Helper: Convert Any Color Space Value to Standard Legacy sRGB Color (Hex)
+// -----------------------------------------------------------------------------
+@function to-legacy-srgb($color) {
+  $gamut-mapped: color.to-gamut($color, $space: srgb, $method: local-minde);
+  $srgb: color.to-space($gamut-mapped, srgb);
+
+  // color.channel() returns 0–1 floats in srgb space; scale to 0–255 integers
+  $r: math.round(color.channel($srgb, "red", $space: srgb) * 255);
+  $g: math.round(color.channel($srgb, "green", $space: srgb) * 255);
+  $b: math.round(color.channel($srgb, "blue", $space: srgb) * 255);
+
+  // Legacy rgb() constructor forces Sass to emit standard #rrggbb hex
+  @return rgb($r, $g, $b);
+}
+
+// Helper: Extract raw "R, G, B" triplet string (useful for rgba(var(--color-x-rgb), 0.5))
+@function to-rgb-triplet($hex-color) {
+  $r: math.round(color.channel($hex-color, "red", $space: rgb));
+  $g: math.round(color.channel($hex-color, "green", $space: rgb));
+  $b: math.round(color.channel($hex-color, "blue", $space: rgb));
+
+  @return #{$r}, #{$g}, #{$b};
+}
+
+// -----------------------------------------------------------------------------
+// 3. Shade Generator Function
+// -----------------------------------------------------------------------------
+@function generate-palette($colors) {
+  $palette: ();
+
+  @each $name, $config in $colors {
+    $hue: null;
+    $saturation: 85%;
+    $lightness-offset: 0%;
+
+    @if meta.type-of($config) == "number" {
+      $hue: $config;
+    } @else if meta.type-of($config) == "map" {
+      $hue: map.get($config, "hue");
+      $saturation: map.get($config, "saturation") or $saturation;
+      $lightness-offset: map.get($config, "lightness") or $lightness-offset;
+    }
+
+    @if meta.type-of($hue) == "number" and math.is-unitless($hue) {
+      $hue: $hue * 1deg;
+    }
+
+    $base-chroma: math.div($saturation, 100%) * 0.28;
+    $shades: ();
+
+    @each $step, $params in $shade-scale {
+      $target-l: map.get($params, "l") + $lightness-offset;
+      $clamped-l: math.max(5%, math.min(99%, $target-l));
+      $target-c: $base-chroma * map.get($params, "c-factor");
+
+      $oklch-color: oklch($clamped-l $target-c $hue);
+      $hex-color: to-legacy-srgb($oklch-color);
+
+      $shades: map.set($shades, $step, (
+              "hex": $hex-color,
+              "rgb": string.unquote("rgb(#{to-rgb-triplet($hex-color)})"),
+              "triplet": to-rgb-triplet($hex-color)
+      ));
+    }
+
+    $palette: map.set($palette, $name, $shades);
+  }
+
+  @return $palette;
+}
+
+// -----------------------------------------------------------------------------
+// 4. Input Configuration
+// -----------------------------------------------------------------------------
+$brand-hues: (
+        "primary": 180,
+        "secondary": 210,
+        "ocean": 220,
+        "emerald": 155deg,
+        "amber": (
+                "hue": 45,
+                "saturation": 95%,
+                "lightness": 4%,
+        ),
+        "slate": (
+                "hue": 215,
+                "saturation": 18%,
+        ),
+);
+
+$generated-colors: generate-palette($brand-hues);
+
+// -----------------------------------------------------------------------------
+// 5. Output CSS Custom Properties (Hex, RGB, and RGB Triplets)
+// -----------------------------------------------------------------------------
+:root {
+  @each $color-name, $shades in $generated-colors {
+    @each $step, $formats in $shades {
+      --prb-3-color-#{$color-name}-#{$step}: #{map.get($formats, "hex")};
+      //--color-#{$color-name}-#{$step}-rgb: #{map.get($formats, "rgb")};
+      //--color-#{$color-name}-#{$step}-channels: #{map.get($formats, "triplet")};
+    }
+  }
+}

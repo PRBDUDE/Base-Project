@@ -1,18 +1,18 @@
 select,
 input {
-    background-color: var(--surface-450);
-    color: var(--surface-950);
-    border: 1px solid var(--surface-700);
+    background-color: var(--prb-color-surface-400);
+    color: var(--prb-color-surface-950);
+    border: 1px solid var(--prb-color-surface-700);
     border-radius: 5px;
-    padding: 5px;
+    padding: 2px 5px;
 
     &::placeholder {
-        color: var(--surface-700);
+        color: var(--prb-color-surface-700);
     }
 
     &:hover,
     &:focus {
-        outline: 1px solid var(--teal-50);
+        outline: 1px solid var(--prb-color-primary-50);
     }
 }
 
@@ -30,6 +30,6 @@ input {
 }
 
 option {
-    background-color: var(--surface-300);
-    color: var(--surface-900);
+    background-color: var(--prb-color-surface-300);
+    color: var(--prb-color-surface-900);
 }
